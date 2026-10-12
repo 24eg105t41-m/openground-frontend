@@ -1,0 +1,158 @@
+import { GroundSummary, GroundDetail } from '../types';
+
+export const DEMO_GROUNDS: GroundSummary[] = [
+  {
+    id: 'demo-1',
+    name: 'Centurion Outdoor Stadium',
+    slug: 'centurion-outdoor-stadium',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    address: 'Gachibowli, Hyderabad, Telangana',
+    boundaryRadiusMeters: 75,
+    pitchType: 'NATURAL_GRASS',
+    floodlights: true,
+    seatingCapacity: 5000,
+    hourlyBaseRate: 3000,
+    primaryImageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
+    keyFacilities: ['Pavilion', 'Floodlights', 'Dressing Rooms'],
+    averageRating: 4.8,
+    reviewCount: 24,
+  },
+  {
+    id: 'demo-2',
+    name: 'Eden Gardens Practice Ground',
+    slug: 'eden-gardens-practice-ground',
+    city: 'Kolkata',
+    state: 'West Bengal',
+    address: 'B.B.D. Bag, Kolkata, West Bengal',
+    boundaryRadiusMeters: 70,
+    pitchType: 'NATURAL_GRASS',
+    floodlights: true,
+    seatingCapacity: 8000,
+    hourlyBaseRate: 3500,
+    primaryImageUrl: 'https://images.unsplash.com/photo-1593766827344-ea73c07cf78a?auto=format&fit=crop&w=800&q=80',
+    keyFacilities: ['Electronic Scoreboard', 'Sightscreens', 'Cafeteria'],
+    averageRating: 4.9,
+    reviewCount: 41,
+  },
+  {
+    id: 'demo-3',
+    name: 'Mumbai Cricket Association Ground',
+    slug: 'mumbai-cricket-association-ground',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    address: 'Bandra Kurla Complex, Mumbai, Maharashtra',
+    boundaryRadiusMeters: 65,
+    pitchType: 'ARTIFICIAL_TURF',
+    floodlights: true,
+    seatingCapacity: 2000,
+    hourlyBaseRate: 4000,
+    primaryImageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=800&q=80',
+    keyFacilities: ['Parking', 'Dressing Rooms', 'Groundsman'],
+    averageRating: 4.6,
+    reviewCount: 18,
+  },
+  {
+    id: 'demo-4',
+    name: 'Chinnaswamy Oval Ground',
+    slug: 'chinnaswamy-oval-ground',
+    city: 'Bengaluru',
+    state: 'Karnataka',
+    address: 'MG Road, Bengaluru, Karnataka',
+    boundaryRadiusMeters: 68,
+    pitchType: 'NATURAL_GRASS',
+    floodlights: false,
+    seatingCapacity: 3000,
+    hourlyBaseRate: 2500,
+    primaryImageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80',
+    keyFacilities: ['Pavilion', 'Practice Nets', 'Parking'],
+    averageRating: 4.5,
+    reviewCount: 31,
+  },
+  {
+    id: 'demo-5',
+    name: 'Chennai Super Ground',
+    slug: 'chennai-super-ground',
+    city: 'Chennai',
+    state: 'Tamil Nadu',
+    address: 'Chepauk, Chennai, Tamil Nadu',
+    boundaryRadiusMeters: 72,
+    pitchType: 'NATURAL_GRASS',
+    floodlights: true,
+    seatingCapacity: 6000,
+    hourlyBaseRate: 3200,
+    primaryImageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
+    keyFacilities: ['Floodlights', 'Electronic Scoreboard', 'VIP Pavilion'],
+    averageRating: 4.7,
+    reviewCount: 29,
+  },
+  {
+    id: 'demo-6',
+    name: 'Sawai Mansingh Practice Arena',
+    slug: 'sawai-mansingh-practice-arena',
+    city: 'Jaipur',
+    state: 'Rajasthan',
+    address: 'SMS Stadium Road, Jaipur, Rajasthan',
+    boundaryRadiusMeters: 60,
+    pitchType: 'ARTIFICIAL_TURF',
+    floodlights: true,
+    seatingCapacity: 1500,
+    hourlyBaseRate: 2000,
+    primaryImageUrl: 'https://images.unsplash.com/photo-1593766827344-ea73c07cf78a?auto=format&fit=crop&w=800&q=80',
+    keyFacilities: ['Parking', 'Cafeteria', 'Dressing Rooms'],
+    averageRating: 4.4,
+    reviewCount: 15,
+  },
+];
+
+export const DEMO_GROUND_DETAIL: Record<string, GroundDetail> = {
+  'centurion-outdoor-stadium': {
+    ...DEMO_GROUNDS[0],
+    description: 'Centurion Outdoor Stadium is one of Hyderabad\'s premier large outdoor cricket grounds. Featuring a full-size natural grass pitch with a 75-meter boundary radius, floodlit towers for evening sessions, and a modern pavilion complex. Ideal for club matches, corporate cricket tournaments, and practice sessions.',
+    pavilionDetails: 'Two-storey pavilion with player dressing rooms, umpire room, press box, and spectator gallery.',
+    images: [
+      { id: 'img-1', imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1200&q=80', isPrimary: true, caption: 'Main ground view' },
+      { id: 'img-2', imageUrl: 'https://images.unsplash.com/photo-1593766827344-ea73c07cf78a?auto=format&fit=crop&w=1200&q=80', isPrimary: false, caption: 'Pavilion end' },
+    ],
+    facilities: ['Natural Grass Pitch', 'Floodlights (4 towers)', 'Pavilion', 'Dressing Rooms (Home & Away)', 'Sightscreens', 'Scoreboard', 'Parking (50 vehicles)', 'Groundsman', 'Drinking Water', 'Restrooms'],
+    slots: [
+      { id: 'slot-1', slotType: 'MORNING', startTime: '7:00 AM', endTime: '11:30 AM', weekdayPrice: 12000, weekendPrice: 14400 },
+      { id: 'slot-2', slotType: 'AFTERNOON', startTime: '12:00 PM', endTime: '4:30 PM', weekdayPrice: 12000, weekendPrice: 14400 },
+      { id: 'slot-3', slotType: 'EVENING', startTime: '5:00 PM', endTime: '9:30 PM', weekdayPrice: 16800, weekendPrice: 19200 },
+      { id: 'slot-4', slotType: 'FULL_DAY', startTime: '7:00 AM', endTime: '5:00 PM', weekdayPrice: 27000, weekendPrice: 33750 },
+    ],
+    reviews: [
+      { id: 'r1', reviewerName: 'Ravi Kumar', rating: 5, comment: 'Excellent ground! Well-maintained pitch and great facilities. Highly recommended for tournament play.', createdAt: '2026-09-15' },
+      { id: 'r2', reviewerName: 'Suresh Reddy', rating: 5, comment: 'Played here for our corporate tournament. The floodlights work perfectly and the ground was in great condition.', createdAt: '2026-09-28' },
+      { id: 'r3', reviewerName: 'Ajay Sharma', rating: 4, comment: 'Nice large ground with proper boundary. Parking could be slightly better but overall a great venue.', createdAt: '2026-10-05' },
+    ],
+    status: 'APPROVED',
+    createdAt: '2026-01-10',
+  },
+};
+
+// Helper — get detail for any demo ground
+export function getDemoGroundDetail(slug: string): GroundDetail {
+  const specific = DEMO_GROUND_DETAIL[slug];
+  if (specific) return specific;
+
+  const summary = DEMO_GROUNDS.find(g => g.slug === slug);
+  if (!summary) throw new Error('Not found');
+
+  return {
+    ...summary,
+    description: `${summary.name} is a premium large outdoor cricket ground in ${summary.city}. Full-size pitch with ${summary.boundaryRadiusMeters}m boundary radius. Exclusively available for whole-ground bookings.`,
+    pavilionDetails: 'Standard pavilion with dressing rooms and spectator area.',
+    images: [{ id: 'img-d', imageUrl: summary.primaryImageUrl || '', isPrimary: true, caption: 'Ground view' }],
+    facilities: ['Cricket Pitch', 'Parking', 'Dressing Rooms', 'Drinking Water', ...(summary.floodlights ? ['Floodlights'] : [])],
+    slots: [
+      { id: 'slot-m', slotType: 'MORNING', startTime: '7:00 AM', endTime: '11:30 AM', weekdayPrice: summary.hourlyBaseRate * 4, weekendPrice: summary.hourlyBaseRate * 4.8 },
+      { id: 'slot-a', slotType: 'AFTERNOON', startTime: '12:00 PM', endTime: '4:30 PM', weekdayPrice: summary.hourlyBaseRate * 4, weekendPrice: summary.hourlyBaseRate * 4.8 },
+      { id: 'slot-e', slotType: 'EVENING', startTime: '5:00 PM', endTime: '9:30 PM', weekdayPrice: summary.hourlyBaseRate * 5.6, weekendPrice: summary.hourlyBaseRate * 6.4 },
+      { id: 'slot-f', slotType: 'FULL_DAY', startTime: '7:00 AM', endTime: '5:00 PM', weekdayPrice: summary.hourlyBaseRate * 9, weekendPrice: summary.hourlyBaseRate * 11.25 },
+    ],
+    reviews: [],
+    status: 'APPROVED',
+    createdAt: '2026-01-01',
+  };
+}
