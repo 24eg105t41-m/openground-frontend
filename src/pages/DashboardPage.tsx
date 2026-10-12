@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { bookingsApi } from '../api/client';
 import { Booking } from '../types';
 import { formatCurrency, slotTypeLabel, bookingStatusColor, formatDate } from '../utils/helpers';
-import { Calendar, MapPin, Loader2, TreePine, XCircle, WifiOff } from 'lucide-react';
+import { Calendar, MapPin, Loader2, TreePine, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -11,7 +11,6 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
 
   const fetchBookings = async () => {
@@ -19,11 +18,8 @@ export default function DashboardPage() {
     try {
       const res = await bookingsApi.myBookings();
       setBookings(res.data);
-      setIsDemo(false);
     } catch {
-      // Backend offline — show empty demo state
       setBookings([]);
-      setIsDemo(true);
     } finally {
       setLoading(false);
     }
@@ -32,11 +28,11 @@ export default function DashboardPage() {
   useEffect(() => { fetchBookings(); }, []);
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Cancel this booking?')) return;
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
     setCancelling(id);
     try {
       await bookingsApi.cancel(id);
-      toast.success('Booking cancelled');
+      toast.success('Booking cancelled successfully');
       fetchBookings();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Cannot cancel this booking');
@@ -65,29 +61,15 @@ export default function DashboardPage() {
           <span className="ml-auto badge bg-forest-100 text-forest-700">{user?.role}</span>
         </div>
 
-        {/* Demo mode banner */}
-        {isDemo && (
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-800">
-            <WifiOff className="w-4 h-4 shrink-0" />
-            <span><strong>Demo Mode</strong> — Bookings are only stored when the live backend is connected.</span>
-          </div>
-        )}
-
         <h2 className="text-lg font-semibold text-gray-900 mb-4">My Bookings</h2>
 
-        {loading && (
-          <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-forest-600 animate-spin" /></div>
-        )}
+        {loading && <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-forest-600 animate-spin" /></div>}
 
         {!loading && bookings.length === 0 && (
           <div className="card p-10 text-center">
             <TreePine className="w-12 h-12 text-gray-200 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No bookings yet</p>
-            <p className="text-gray-400 text-sm mt-1 mb-5">
-              {isDemo
-                ? 'In demo mode, bookings need the live backend to be saved.'
-                : 'Find a large outdoor cricket ground and make your first booking.'}
-            </p>
+            <p className="text-gray-400 text-sm mt-1 mb-5">Find a large outdoor cricket ground and book your first session.</p>
             <Link to="/grounds" className="btn-primary">Find Grounds</Link>
           </div>
         )}
@@ -102,9 +84,7 @@ export default function DashboardPage() {
                     <span className="font-mono text-xs text-gray-400">{b.bookingReference}</span>
                   </div>
                   <h3 className="font-semibold text-gray-900">{b.groundName}</h3>
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" /> {b.groundCity}
-                  </p>
+                  <p className="text-sm text-gray-500 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {b.groundCity}</p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600">
                     <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(b.bookingDate)}</span>
                     <span>{slotTypeLabel(b.slotType)} · {b.startTime} – {b.endTime}</span>
@@ -113,11 +93,8 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-end gap-2">
                   <div className="text-lg font-bold text-forest-700">{formatCurrency(b.totalAmount)}</div>
                   {(b.status === 'CONFIRMED' || b.status === 'PENDING') && (
-                    <button
-                      onClick={() => handleCancel(b.id)}
-                      disabled={cancelling === b.id}
-                      className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
-                    >
+                    <button onClick={() => handleCancel(b.id)} disabled={cancelling === b.id}
+                      className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50">
                       {cancelling === b.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                       Cancel
                     </button>

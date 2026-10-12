@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   MapPin, Star, Zap, Shield, ChevronLeft, Calendar, Check, Loader2,
-  Sun, AlertCircle, WifiOff
+  Sun, AlertCircle
 } from 'lucide-react';
-import { groundsApi } from '../api/client';
+import { groundsApi, bookingsApi } from '../api/client';
 import { GroundDetail, PricingSlot, SlotType } from '../types';
-import { formatCurrency, pitchTypeLabel, slotTypeLabel, formatDate } from '../utils/helpers';
+import { formatCurrency, pitchTypeLabel, slotTypeLabel } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
-import { getDemoGroundDetail } from '../data/demoData';
 
 export default function GroundDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,56 +16,51 @@ export default function GroundDetailPage() {
   const [ground, setGround] = useState<GroundDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isDemo, setIsDemo] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<PricingSlot | null>(null);
   const [date, setDate] = useState('');
   const [imgIdx, setImgIdx] = useState(0);
   const [price, setPrice] = useState<{ total: number; base: number; tax: number } | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
     groundsApi.getBySlug(slug)
-      .then(r => { setGround(r.data); setIsDemo(false); })
-      .catch(() => {
-        try {
-          setGround(getDemoGroundDetail(slug));
-          setIsDemo(true);
-        } catch {
-          setError('Ground not found.');
-        }
-      })
+      .then(r => setGround(r.data))
+      .catch(() => setError('Ground not found.'))
       .finally(() => setLoading(false));
   }, [slug]);
 
   useEffect(() => {
     if (!ground || !selectedSlot || !date) { setPrice(null); return; }
-    if (isDemo) {
-      // Calculate price client-side in demo mode
-      const base = selectedSlot.weekdayPrice;
-      const tax = base * 0.18;
-      setPrice({ total: base + tax, base, tax });
-      return;
-    }
     setPriceLoading(true);
     groundsApi.getPrice(ground.id, selectedSlot.id, date)
       .then(r => setPrice({ total: r.data.totalPrice, base: r.data.basePrice, tax: r.data.tax }))
       .catch(() => {
         const base = selectedSlot.weekdayPrice;
-        const tax = base * 0.18;
-        setPrice({ total: base + tax, base, tax });
+        setPrice({ base, tax: Math.round(base * 0.18), total: base + Math.round(base * 0.18) });
       })
       .finally(() => setPriceLoading(false));
   }, [ground, selectedSlot, date]);
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!isAuthenticated) { navigate('/login'); return; }
     if (!ground || !selectedSlot || !date) return;
-    if (isDemo) {
-      navigate('/login');
-      return;
+    setBooking(true);
+    try {
+      const res = await bookingsApi.create({
+        groundId: ground.id,
+        pricingSlotId: selectedSlot.id,
+        bookingDate: date,
+        paymentMethod: 'PAY_AT_GROUND',
+      });
+      navigate('/booking-confirmed', { state: { booking: res.data, ground } });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Booking failed. Please try again.';
+      alert(msg);
+    } finally {
+      setBooking(false);
     }
-    navigate(`/book/${ground.id}`, { state: { slot: selectedSlot, date, ground } });
   };
 
   const slotIcon = (type: SlotType) => {
@@ -96,15 +90,8 @@ export default function GroundDetailPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Search
         </Link>
 
-        {isDemo && (
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-800">
-            <WifiOff className="w-4 h-4 shrink-0" />
-            <span><strong>Demo Mode</strong> — This is sample data. Booking requires the live backend.</span>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Details */}
+          {/* Left */}
           <div className="lg:col-span-2 space-y-5">
             <div className="card overflow-hidden">
               <div className="relative h-72 sm:h-96 bg-gray-100">
@@ -112,7 +99,7 @@ export default function GroundDetailPage() {
                 {images.length > 1 && (
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
                     {images.map((_, i) => (
-                      <button key={i} onClick={() => setImgIdx(i)} className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? 'bg-white' : 'bg-white/50'}`} />
+                      <button key={i} onClick={() => setImgIdx(i)} className={`w-2 h-2 rounded-full ${i === imgIdx ? 'bg-white' : 'bg-white/50'}`} />
                     ))}
                   </div>
                 )}
@@ -122,12 +109,10 @@ export default function GroundDetailPage() {
                   <span className="badge bg-forest-100 text-forest-700">{pitchTypeLabel(ground.pitchType)}</span>
                   <span className="badge bg-gray-100 text-gray-700">{ground.boundaryRadiusMeters}m boundary</span>
                   {ground.floodlights && <span className="badge bg-yellow-100 text-yellow-700 flex items-center gap-1"><Zap className="w-3 h-3" /> Floodlit</span>}
-                  {ground.seatingCapacity && <span className="badge bg-blue-100 text-blue-700">{ground.seatingCapacity.toLocaleString()} seats</span>}
+                  {(ground.seatingCapacity ?? 0) > 0 && <span className="badge bg-blue-100 text-blue-700">{ground.seatingCapacity!.toLocaleString()} seats</span>}
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">{ground.name}</h1>
-                <p className="text-gray-500 flex items-center gap-1 text-sm mb-2">
-                  <MapPin className="w-4 h-4" /> {ground.address}
-                </p>
+                <p className="text-gray-500 flex items-center gap-1 text-sm mb-2"><MapPin className="w-4 h-4" /> {ground.address}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex">
                     {[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= Math.round(ground.averageRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />)}
@@ -214,11 +199,11 @@ export default function GroundDetailPage() {
                 </div>
               </div>
 
-              {selectedSlot && date && price && (
+              {selectedSlot && date && (
                 <div className="mb-4 bg-forest-50 rounded-xl p-3">
                   {priceLoading ? (
                     <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Calculating...</div>
-                  ) : (
+                  ) : price ? (
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between text-gray-600"><span>Base price</span><span>{formatCurrency(price.base)}</span></div>
                       <div className="flex justify-between text-gray-600"><span>Tax (18% GST)</span><span>{formatCurrency(price.tax)}</span></div>
@@ -226,16 +211,16 @@ export default function GroundDetailPage() {
                         <span>Total</span><span className="text-forest-700 text-base">{formatCurrency(price.total)}</span>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               )}
 
               <button
                 onClick={handleBook}
-                disabled={!selectedSlot || !date}
+                disabled={!selectedSlot || !date || booking}
                 className="w-full btn-primary justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDemo ? 'Sign In to Book (Live Mode)' : isAuthenticated ? 'Proceed to Booking' : 'Sign In to Book'}
+                {booking ? <><Loader2 className="w-4 h-4 animate-spin" /> Booking...</> : isAuthenticated ? 'Confirm Booking' : 'Sign In to Book'}
               </button>
 
               <div className="mt-3 flex items-center gap-1 text-xs text-gray-400 justify-center">

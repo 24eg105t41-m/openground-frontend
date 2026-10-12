@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, MapPin, SlidersHorizontal, Star, Zap, TreePine, Loader2, WifiOff } from 'lucide-react';
+import { Search, MapPin, SlidersHorizontal, Star, Zap, TreePine, Loader2 } from 'lucide-react';
 import { groundsApi } from '../api/client';
 import { GroundSummary, PitchType } from '../types';
 import { formatCurrency, pitchTypeLabel } from '../utils/helpers';
-import { DEMO_GROUNDS } from '../data/demoData';
 
 export default function GroundsPage() {
   const [searchParams] = useSearchParams();
   const [grounds, setGrounds] = useState<GroundSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
+  const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   const [city, setCity] = useState(searchParams.get('city') || '');
@@ -19,18 +18,9 @@ export default function GroundsPage() {
   const [maxRate, setMaxRate] = useState('');
   const [searchText, setSearchText] = useState('');
 
-  const filterDemo = (data: GroundSummary[]) => {
-    let result = data;
-    if (city) result = result.filter(g => g.city.toLowerCase().includes(city.toLowerCase()) || g.state.toLowerCase().includes(city.toLowerCase()));
-    if (pitchType) result = result.filter(g => g.pitchType === pitchType);
-    if (floodlights !== undefined) result = result.filter(g => g.floodlights === floodlights);
-    if (maxRate) result = result.filter(g => g.hourlyBaseRate <= Number(maxRate));
-    if (searchText) result = result.filter(g => g.name.toLowerCase().includes(searchText.toLowerCase()));
-    return result;
-  };
-
   const fetchGrounds = async () => {
     setLoading(true);
+    setError('');
     try {
       const params: Record<string, string | number | undefined> = {};
       if (city) params.city = city;
@@ -40,11 +30,8 @@ export default function GroundsPage() {
       if (searchText) params.search = searchText;
       const res = await groundsApi.search(params);
       setGrounds(res.data);
-      setIsDemo(false);
     } catch {
-      // Backend unavailable — use demo data
-      setGrounds(filterDemo(DEMO_GROUNDS));
-      setIsDemo(true);
+      setError('Failed to load grounds. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -54,11 +41,7 @@ export default function GroundsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isDemo) {
-      setGrounds(filterDemo(DEMO_GROUNDS));
-    } else {
-      fetchGrounds();
-    }
+    fetchGrounds();
   };
 
   return (
@@ -71,17 +54,6 @@ export default function GroundsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Demo mode banner */}
-        {isDemo && (
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-800">
-            <WifiOff className="w-4 h-4 shrink-0" />
-            <span>
-              <strong>Demo Mode</strong> — Showing sample grounds. Connect the backend for live data.
-              <a href="https://github.com/24eg105t28-rr/openground-backend" target="_blank" rel="noreferrer" className="ml-1 underline">Setup guide →</a>
-            </span>
-          </div>
-        )}
-
         {/* Search bar */}
         <form onSubmit={handleSearch} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4 flex flex-col md:flex-row gap-3">
           <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5">
@@ -98,7 +70,6 @@ export default function GroundsPage() {
           <button type="submit" className="btn-primary text-sm"><Search className="w-4 h-4" /> Search</button>
         </form>
 
-        {/* Filters */}
         {showFilters && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -126,7 +97,14 @@ export default function GroundsPage() {
 
         {loading && <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-forest-600 animate-spin" /></div>}
 
-        {!loading && grounds.length === 0 && (
+        {!loading && error && (
+          <div className="text-center py-20">
+            <p className="text-red-600 font-medium">{error}</p>
+            <button onClick={fetchGrounds} className="mt-3 btn-outline text-sm">Try Again</button>
+          </div>
+        )}
+
+        {!loading && !error && grounds.length === 0 && (
           <div className="text-center py-20">
             <TreePine className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No grounds found.</p>
@@ -134,9 +112,9 @@ export default function GroundsPage() {
           </div>
         )}
 
-        {!loading && grounds.length > 0 && (
+        {!loading && !error && grounds.length > 0 && (
           <>
-            <p className="text-sm text-gray-500 mb-4">{grounds.length} outdoor cricket ground{grounds.length !== 1 ? 's' : ''} found{isDemo ? ' (demo)' : ''}</p>
+            <p className="text-sm text-gray-500 mb-4">{grounds.length} outdoor cricket ground{grounds.length !== 1 ? 's' : ''} found</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {grounds.map(g => <GroundCard key={g.id} ground={g} />)}
             </div>
