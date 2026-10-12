@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { bookingsApi } from '../api/client';
 import { Booking } from '../types';
 import { formatCurrency, slotTypeLabel, bookingStatusColor, formatDate } from '../utils/helpers';
-import { Calendar, MapPin, Loader2, TreePine, XCircle } from 'lucide-react';
+import { Calendar, MapPin, Loader2, TreePine, XCircle, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
 
   const fetchBookings = async () => {
@@ -18,8 +19,11 @@ export default function DashboardPage() {
     try {
       const res = await bookingsApi.myBookings();
       setBookings(res.data);
+      setIsDemo(false);
     } catch {
-      toast.error('Failed to load bookings');
+      // Backend offline — show empty demo state
+      setBookings([]);
+      setIsDemo(true);
     } finally {
       setLoading(false);
     }
@@ -49,9 +53,10 @@ export default function DashboardPage() {
           <p className="text-gray-500 text-sm">Welcome back, {user?.fullName}</p>
         </div>
 
+        {/* Profile card */}
         <div className="card p-5 mb-6 flex items-center gap-4">
           <div className="w-12 h-12 bg-forest-600 rounded-full flex items-center justify-center text-white text-lg font-bold">
-            {user?.fullName?.charAt(0)}
+            {user?.fullName?.charAt(0).toUpperCase()}
           </div>
           <div>
             <p className="font-semibold text-gray-900">{user?.fullName}</p>
@@ -59,6 +64,14 @@ export default function DashboardPage() {
           </div>
           <span className="ml-auto badge bg-forest-100 text-forest-700">{user?.role}</span>
         </div>
+
+        {/* Demo mode banner */}
+        {isDemo && (
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-800">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span><strong>Demo Mode</strong> — Bookings are only stored when the live backend is connected.</span>
+          </div>
+        )}
 
         <h2 className="text-lg font-semibold text-gray-900 mb-4">My Bookings</h2>
 
@@ -70,7 +83,11 @@ export default function DashboardPage() {
           <div className="card p-10 text-center">
             <TreePine className="w-12 h-12 text-gray-200 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No bookings yet</p>
-            <p className="text-gray-400 text-sm mt-1 mb-5">Find a large outdoor cricket ground and make your first booking.</p>
+            <p className="text-gray-400 text-sm mt-1 mb-5">
+              {isDemo
+                ? 'In demo mode, bookings need the live backend to be saved.'
+                : 'Find a large outdoor cricket ground and make your first booking.'}
+            </p>
             <Link to="/grounds" className="btn-primary">Find Grounds</Link>
           </div>
         )}
@@ -95,7 +112,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="text-lg font-bold text-forest-700">{formatCurrency(b.totalAmount)}</div>
-                  {b.status === 'CONFIRMED' || b.status === 'PENDING' ? (
+                  {(b.status === 'CONFIRMED' || b.status === 'PENDING') && (
                     <button
                       onClick={() => handleCancel(b.id)}
                       disabled={cancelling === b.id}
@@ -104,7 +121,7 @@ export default function DashboardPage() {
                       {cancelling === b.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                       Cancel
                     </button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             ))}

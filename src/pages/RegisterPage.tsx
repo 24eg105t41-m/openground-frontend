@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { TreePine, Mail, Lock, User, Phone, Loader2, Eye, EyeOff } from 'lucide-react';
+import { TreePine, Mail, Lock, User, Phone, Loader2, Eye, EyeOff, WifiOff } from 'lucide-react';
 import { authApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -24,13 +24,31 @@ export default function RegisterPage() {
     if (form.password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setLoading(true);
     try {
+      // Try real backend first
       const res = await authApi.register(form);
       login(res.data.token, res.data.user);
       toast.success('Account created!');
       if (form.role === 'OWNER') navigate('/owner');
       else navigate('/grounds');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Registration failed');
+      const status = err?.response?.status;
+      if (status === 400 || status === 409) {
+        // Real backend error (e.g. email already exists)
+        toast.error(err?.response?.data?.message || 'Registration failed. Email may already be in use.');
+      } else {
+        // Backend offline — create demo session
+        const demoUser = {
+          id: `demo-${Date.now()}`,
+          fullName: form.fullName,
+          email: form.email,
+          phone: form.phone,
+          role: form.role as 'CUSTOMER' | 'OWNER' | 'ADMIN',
+        };
+        login('demo-token-' + Date.now(), demoUser);
+        toast.success(`Welcome, ${form.fullName}! (Demo mode — backend offline)`, { duration: 4000 });
+        if (form.role === 'OWNER') navigate('/owner');
+        else navigate('/grounds');
+      }
     } finally {
       setLoading(false);
     }
@@ -101,6 +119,12 @@ export default function RegisterPage() {
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating Account...</> : 'Create Account'}
             </button>
           </form>
+
+          {/* Demo mode note */}
+          <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+            <WifiOff className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>If the backend is offline, you'll be signed in with a <strong>demo session</strong> for browsing. Real bookings require the live backend.</span>
+          </div>
 
           <p className="text-center text-sm text-gray-500 mt-4">
             Already have an account?{' '}
